@@ -37,6 +37,13 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
 };
+use codec::{Decode, Encode};
+
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
+/// Import tokens pallet.
+pub use orml_tokens;
 
 /// Import the template pallet.
 pub use pallet_template;
@@ -266,6 +273,33 @@ impl pallet_template::Trait for Runtime {
 	type Event = Event;
 }
 
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, core::fmt::Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum TokenSymbol {
+	ACA = 0,
+	AUSD = 1,
+	DOT = 2,
+	XBTC = 3,
+	LDOT = 4,
+	RENBTC = 5,
+}
+
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, core::fmt::Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum CurrencyId {
+	Token(TokenSymbol),
+	DEXShare(TokenSymbol, TokenSymbol),
+}
+
+impl orml_tokens::Trait for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = i128;
+	type CurrencyId = CurrencyId;
+	type OnReceived = ();
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -283,6 +317,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
+		Tokens: orml_tokens::{Module, Call, Storage, Event<T>},
 	}
 );
 
